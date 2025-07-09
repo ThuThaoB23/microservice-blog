@@ -9,7 +9,7 @@ pipeline {
   environment {
     IMAGE_NAME = "thaott084/user-service"
     ENV_FILE = "/root/env-app/.env"
-    SERVICE_DIR = "microservice/user-service"
+    SERVICE_DIR = "user-service"
   }
 
   stages {
