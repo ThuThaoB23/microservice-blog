@@ -14,7 +14,7 @@ services:
       - mysql_user_data:/var/lib/mysql
 
   user-service:
-    image: thaott084/user-service:build-1234-abcdefg  # được inject tự động
+    image: ${SERVICE_IMAGE}
     depends_on:
       - mysql
     restart: always

@@ -65,6 +65,19 @@ pipeline {
         sh 'docker push $IMAGE_TAG'
       }
     }
+
+    stage('Deploy using docker-compose') {
+        steps {
+            dir("$DEPLOY_DIR") {
+                sh '''
+                    export SERVICE_IMAGE=$IMAGE_TAG
+                    docker-compose pull
+                    docker-compose down
+                    docker-compose up -d
+                '''
+            }
+        }
+    }
   }
 
   post {
