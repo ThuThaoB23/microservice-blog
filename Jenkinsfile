@@ -1,7 +1,7 @@
 pipeline {
   agent {
     docker {
-      image 'thaott084/node-docker-cli:1.0'
+      image 'thaott084/node-docker-cli:2.0'
       args '-v /var/run/docker.sock:/var/run/docker.sock'
     }
   }
