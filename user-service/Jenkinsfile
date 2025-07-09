@@ -68,7 +68,7 @@ pipeline {
 
     stage('Deploy using docker-compose') {
         steps {
-            dir("$DEPLOY_DIR") {
+            dir("${SERVICE_DIR}") {
                 sh '''
                     export SERVICE_IMAGE=$IMAGE_TAG
                     docker-compose pull
