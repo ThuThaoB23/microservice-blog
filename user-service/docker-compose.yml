@@ -16,7 +16,7 @@ services:
   user-service:
     image: ${SERVICE_IMAGE}
     depends_on:
-      - mysql
+      - mysql-user-db
     restart: always
     env_file: /root/env-app/.env
     ports:
