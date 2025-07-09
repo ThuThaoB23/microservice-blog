@@ -1,29 +1,33 @@
 pipeline {
-  agent {
-    docker {
-      image 'docker:24.0.7-cli' // Docker CLI (không phải dind)
-      args  '-v /var/run/docker.sock:/var/run/docker.sock'
-    }
-  }
+  agent any
 
   environment {
     IMAGE_NAME = 'thaott084/user-service'
-    GIT_COMMIT_SHORT = "${env.GIT_COMMIT[0..6]}"
-    BUILD_TAG = "build-${env.BUILD_NUMBER}-${env.GIT_COMMIT_SHORT}"
     CONTAINER_NAME = 'user-service'
     PORT = '3000'
   }
 
   stages {
-    stage('Clone code') {
+    stage('Clone source') {
       steps {
         git branch: 'main', url: 'https://github.com/ThuThaoB23/microservice-blog.git'
       }
     }
 
+    stage('Set Docker tag') {
+      steps {
+        script {
+          def shortCommit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+          env.IMAGE_TAG = "build-${BUILD_NUMBER}-${shortCommit}"
+        }
+      }
+    }
+
     stage('Build Docker image') {
       steps {
-        sh 'docker build -t $IMAGE_NAME:$BUILD_TAG ./user-service'
+        dir('user-service') {
+          sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
+        }
       }
     }
 
@@ -36,18 +40,26 @@ pipeline {
         )]) {
           sh '''
             echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-            docker push $IMAGE_NAME:$BUILD_TAG
+            docker push $IMAGE_NAME:$IMAGE_TAG
           '''
         }
       }
     }
 
-    stage('Deploy via Docker Compose') {
+    stage('Deploy by Docker Compose') {
       steps {
+        script {
+          // Inject tag vào docker-compose.yml (nếu có dùng image tag động)
+          sh """
+            cd user-service/deploy
+            sed -i 's|image: $IMAGE_NAME:.*|image: $IMAGE_NAME:$IMAGE_TAG|' docker-compose.yml
+          """
+        }
+
         sh '''
-          cd user-service/deploy
-          sed -i "s|image: .*|image: $IMAGE_NAME:$BUILD_TAG|g" docker-compose.yml
-          docker compose -f docker-compose.yml --env-file /root/env-app/.env up -d --remove-orphans
+          docker compose down || true
+          docker compose pull
+          docker compose up -d
         '''
       }
     }
@@ -55,10 +67,10 @@ pipeline {
 
   post {
     success {
-      echo "✅ Build & deploy thành công: $IMAGE_NAME:$BUILD_TAG"
+      echo "✅ CI/CD thành công: $IMAGE_NAME:$IMAGE_TAG đã được deploy!"
     }
     failure {
-      echo "❌ Có lỗi xảy ra khi build/deploy"
+      echo "❌ CI/CD thất bại. Kiểm tra lại các bước."
     }
   }
 }
