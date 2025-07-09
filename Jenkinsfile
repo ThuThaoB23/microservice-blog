@@ -10,7 +10,7 @@ pipeline {
   stages {
     stage('Clone source') {
       steps {
-        git branch: 'main', url: 'git@github.com:ThuThaoB23/microservice-blog.git'
+        git branch: 'main', url: 'https://github.com/ThuThaoB23/microservice-blog.git'
       }
     }
 
