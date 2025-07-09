@@ -1,5 +1,5 @@
 pipeline {
-  agent any
+  agent {label 'nestjs'}
 
   environment {
     IMAGE_NAME = 'thaott084/user-service'
