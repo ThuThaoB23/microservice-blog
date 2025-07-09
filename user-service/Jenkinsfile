@@ -10,8 +10,6 @@ pipeline {
     IMAGE_NAME = "thaott084/user-service"
     ENV_FILE = "/root/env-app/.env"
     SERVICE_DIR = "user-service"
-    DOCKER_USERNAME = credentials('thaott084') // Thay đổi theo tên credential của bạn
-    DOCKER_PASSWORD = credentials('Dangthuc02@') // Thay đổi theo tên credential của bạn
   }
 
   stages {
@@ -42,9 +40,10 @@ pipeline {
 
     stage('Login to Docker Registry') {
       steps {
-        script {
-          def dockerLoginCmd = "docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}"
-          sh dockerLoginCmd
+        withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+          sh '''
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          '''
         }
       }
     }
