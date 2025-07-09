@@ -1,14 +1,15 @@
 pipeline {
   agent {
-    label 'node'
+    docker {
+      image 'thaott084/node-docker-cli:1.0'
+      args '-v /var/run/docker.sock:/var/run/docker.sock'
+    }
   }
-
   stages {
-    stage('Build') {
+    stage('Check versions') {
       steps {
         sh 'node -v'
-        sh 'npm install'
-        sh 'npm run build'
+        sh 'docker --version'
       }
     }
   }
