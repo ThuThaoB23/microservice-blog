@@ -1,0 +1,68 @@
+pipeline {
+  agent {
+    docker {
+      image 'thaott084/node-docker-cli:2.0' // Docker image bạn build
+      args '-v /var/run/docker.sock:/var/run/docker.sock' // để sử dụng docker CLI
+    }
+  }
+
+  environment {
+    IMAGE_NAME = "thaott084/user-service"
+    ENV_FILE = "/root/env-app/.env"
+  }
+
+  stages {
+    stage('Clone source') {
+          steps {
+            checkout scm
+            script {
+              dir("${SERVICE_DIR}") {
+                sh 'ls -la' // Kiểm tra đã vào đúng folder
+              }
+            }
+          }
+        }
+
+    stage('Install deps') {
+      workingDir 'microservice/user-service'
+      steps {
+        sh 'npm install'
+      }
+    }
+
+    stage('Build') {
+      workingDir 'microservice/user-service'
+      steps {
+        sh 'npm run build'
+      }
+    }
+
+    stage('Docker Build') {
+      workingDir 'microservice/user-service'
+      steps {
+        script {
+          COMMIT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+          env.IMAGE_TAG = "${env.IMAGE_NAME}:${BUILD_NUMBER}-${COMMIT}"
+        }
+
+        sh 'docker build -t $IMAGE_TAG .'
+      }
+    }
+
+    stage('Docker Push') {
+      steps {
+        sh 'docker push $IMAGE_TAG'
+      }
+    }
+
+  }
+
+  post {
+    failure {
+      echo '❌ Build failed'
+    }
+    success {
+      echo '✅ Deploy thành công'
+    }
+  }
+}
