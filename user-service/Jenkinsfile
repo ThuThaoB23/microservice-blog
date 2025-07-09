@@ -7,7 +7,7 @@ pipeline {
   }
 
   environment {
-    IMAGE_NAME = "thaott084/user-service"
+    IMAGE_NAME = "thuctd281/user-service"
     ENV_FILE = "/root/env-app/.env"
     SERVICE_DIR = "user-service"
   }
