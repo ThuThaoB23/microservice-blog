@@ -10,6 +10,8 @@ pipeline {
     IMAGE_NAME = "thaott084/user-service"
     ENV_FILE = "/root/env-app/.env"
     SERVICE_DIR = "user-service"
+    DOCKER_USERNAME = credentials('thaott084') // Thay đổi theo tên credential của bạn
+    DOCKER_PASSWORD = credentials('Dangthuc02@') // Thay đổi theo tên credential của bạn
   }
 
   stages {
@@ -34,6 +36,15 @@ pipeline {
       steps {
         dir("${SERVICE_DIR}") {
           sh 'npm run build'
+        }
+      }
+    }
+
+    stage('Login to Docker Registry') {
+      steps {
+        script {
+          def dockerLoginCmd = "docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}"
+          sh dockerLoginCmd
         }
       }
     }
