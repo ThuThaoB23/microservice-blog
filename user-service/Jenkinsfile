@@ -2,50 +2,51 @@ pipeline {
   agent {
     docker {
       image 'thaott084/node-docker-cli:2.0' // Docker image bạn build
-      args '-v /var/run/docker.sock:/var/run/docker.sock' // để sử dụng docker CLI
+      args '-v /var/run/docker.sock:/var/run/docker.sock'
     }
   }
 
   environment {
     IMAGE_NAME = "thaott084/user-service"
     ENV_FILE = "/root/env-app/.env"
+    SERVICE_DIR = "microservice/user-service"
   }
 
   stages {
     stage('Clone source') {
-          steps {
-            checkout scm
-            script {
-              dir("${SERVICE_DIR}") {
-                sh 'ls -la' // Kiểm tra đã vào đúng folder
-              }
-            }
-          }
+      steps {
+        checkout scm
+        dir("${SERVICE_DIR}") {
+          sh 'ls -la'
         }
+      }
+    }
 
     stage('Install deps') {
-      workingDir 'microservice/user-service'
       steps {
-        sh 'npm install'
+        dir("${SERVICE_DIR}") {
+          sh 'npm install'
+        }
       }
     }
 
     stage('Build') {
-      workingDir 'microservice/user-service'
       steps {
-        sh 'npm run build'
+        dir("${SERVICE_DIR}") {
+          sh 'npm run build'
+        }
       }
     }
 
     stage('Docker Build') {
-      workingDir 'microservice/user-service'
       steps {
-        script {
-          COMMIT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-          env.IMAGE_TAG = "${env.IMAGE_NAME}:${BUILD_NUMBER}-${COMMIT}"
+        dir("${SERVICE_DIR}") {
+          script {
+            def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+            env.IMAGE_TAG = "${env.IMAGE_NAME}:build-${BUILD_NUMBER}-${commit}"
+            sh 'docker build -t $IMAGE_TAG .'
+          }
         }
-
-        sh 'docker build -t $IMAGE_TAG .'
       }
     }
 
@@ -54,7 +55,6 @@ pipeline {
         sh 'docker push $IMAGE_TAG'
       }
     }
-
   }
 
   post {
