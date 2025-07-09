@@ -67,6 +67,13 @@ pipeline {
     }
 
     stage('Deploy using docker-compose') {
+          agent {
+            docker {
+              image 'docker/compose:1.29.2' // hoặc image tùy chọn bạn build
+              args '-v /var/run/docker.sock:/var/run/docker.sock'
+            }
+          }
+
         steps {
             dir("${SERVICE_DIR}") {
                 sh '''
