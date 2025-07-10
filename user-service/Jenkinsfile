@@ -77,7 +77,7 @@ pipeline {
         steps {
             dir("${SERVICE_DIR}") {
                 sh '''
-                    sudo cat /root/env-app/.env > .env
+                    cat /root/env-app/.env > .env
                     export SERVICE_IMAGE=$IMAGE_TAG
                     docker-compose pull
                     docker-compose down
