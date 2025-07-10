@@ -79,6 +79,7 @@ pipeline {
                 dir("${SERVICE_DIR}") {
                     sh '''
                         echo "$ENV_FILE_CONTENT" > .env
+                        cat .env
                         export SERVICE_IMAGE=$IMAGE_TAG
                         docker-compose pull
                         docker-compose down
@@ -96,11 +97,6 @@ pipeline {
     }
     success {
       echo '✅ Deploy thành công'
-    }
-    always {
-        dir("${SERVICE_DIR}") {
-            sh 'rm -f .env'
-        }
     }
   }
 }
