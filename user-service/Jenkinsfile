@@ -48,52 +48,46 @@ pipeline {
       }
     }
 
-    stage('Checkout env file') {
+    stage('Docker Build') {
       steps {
         dir("${SERVICE_DIR}") {
-          sh 'ls -la /root/env-app'
+          script {
+            def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+            env.IMAGE_TAG = "${env.IMAGE_NAME}:build-${BUILD_NUMBER}-${commit}"
+            sh 'docker build -t $IMAGE_TAG .'
+          }
         }
       }
     }
 
-//     stage('Docker Build') {
-//       steps {
-//         dir("${SERVICE_DIR}") {
-//           script {
-//             def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-//             env.IMAGE_TAG = "${env.IMAGE_NAME}:build-${BUILD_NUMBER}-${commit}"
-//             sh 'docker build -t $IMAGE_TAG .'
-//           }
-//         }
-//       }
-//     }
-//
-//     stage('Docker Push') {
-//       steps {
-//         sh 'docker push $IMAGE_TAG'
-//       }
-//     }
-//
-//     stage('Deploy using docker-compose') {
-//           agent {
-//             docker {
-//               image 'docker/compose:1.29.2' // hoặc image tùy chọn bạn build
-//               args '-v /var/run/docker.sock:/var/run/docker.sock'
-//             }
-//           }
-//
-//         steps {
-//             dir("${SERVICE_DIR}") {
-//                 sh '''
-//                     cat /root/env-app/.env > .env
-//                     export SERVICE_IMAGE=$IMAGE_TAG
-//                     docker-compose pull
-//                     docker-compose down
-//                     docker-compose up -d
-//                 '''
-//             }
-//         }
-//     }
+    stage('Docker Push') {
+      steps {
+        sh 'docker push $IMAGE_TAG'
+      }
+    }
+
+    stage('Deploy using docker-compose') {
+          agent {
+            docker {
+              image 'docker/compose:1.29.2' // hoặc image tùy chọn bạn build
+              args '-v /var/run/docker.sock:/var/run/docker.sock'
+            }
+          }
+
+        steps {
+            withCredentials([string(credentialsId: 'env', variable: 'ENV_FILE_CONTENT')]) {
+                dir("${SERVICE_DIR}") {
+                    sh '''
+                        echo "$ENV_FILE_CONTENT" > .env
+                        export SERVICE_IMAGE=$IMAGE_TAG
+                        docker-compose pull
+                        docker-compose down
+                        docker-compose up -d
+                    '''
+                }
+            }
+        }
+    }
   }
 
   post {
@@ -102,6 +96,11 @@ pipeline {
     }
     success {
       echo '✅ Deploy thành công'
+    }
+    always {
+        dir("${SERVICE_DIR}") {
+            sh 'rm -f .env'
+        }
     }
   }
 }
