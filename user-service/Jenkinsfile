@@ -75,7 +75,7 @@ pipeline {
           }
 
         steps {
-            withCredentials([file(credentialsId: 'ENV_FILE_PROD', variable: 'ENV_FILE')]) {
+            withCredentials([file(credentialsId: 'FILE_ENV', variable: 'ENV_FILE')]) {
                 dir("${SERVICE_DIR}") {
                     sh '''
                         cp "$ENV_FILE" .env
